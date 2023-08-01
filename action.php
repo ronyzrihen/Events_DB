@@ -92,6 +92,12 @@ if (!empty($_POST['insert_order'])) {
     <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Nunito" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
+      
+        <?php
+        if (!empty($_POST['incomeWeeks'])) {
+        echo "<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/css/bootstrap.min.css'><link rel='stylesheet' href='./style.css'>";
+        }
+        ?>
     <title>Document</title>
 </head>
 
@@ -103,10 +109,13 @@ if (!empty($_POST['insert_order'])) {
 
 if (!empty($_POST['incomeWeeks'])) {
     
+
+    echo "<h1 class='text-center m-4 mt-5 text-secondary'>Total Income The Past ".$_POST['incomeWeeks']." Weeks</h1>";
     echo"
-    <div class = 'container '>
     
-        <h1 class='fs-1 text-center mt-5'>".$income['total_income']."</h1>
+    <div class = 'container p-5 bg-light border  border-success mt-5 rounded-4 bg-body-tertiary shadow'>
+    
+        <h1 class='fs-1 text-center text-success '>".$income['total_income']." ₪</h1>
 
     </div>";
         
@@ -239,8 +248,10 @@ if (!empty($_POST['incomeWeeks'])) {
     </tbody>
     </table>";
     }
-    ?>
-
+    if (!empty($_POST['incomeWeeks'])) {
+     echo "<script src='https://cdn.jsdelivr.net/npm/tsparticles-confetti@2.11.0/tsparticles.confetti.bundle.min.js'></script><script  src='./script.js'></script>";
+    }
+   ?>
 </body>
 
 </html>
