@@ -4,6 +4,29 @@ include "db.php";
 include "config.php";
 
 
+if (!empty($_POST['Discount'])){
+
+$discountQuery = "call give_discount(".$_POST['Pevent'].",".$_POST['Discount'].")";
+$discountRes = mysqli_query($connection, $discountQuery);
+        if (!$discountRes) {
+        die("Query Failed (query_delivery)");
+    }else{
+        $discountRow = mysqli_fetch_assoc($discountRes);
+    }
+ }
+
+////////////////////////////////////////////////////////////////////////////////
+if (!empty($_POST['worker'])) {
+
+        $addStaffQuery = "call worker_assingment(".$_POST['worker'].", ".$_POST['Pevent']." );";
+       $addStaffRes = mysqli_query($connection, $addStaffQuery);
+        if (!$addStaffRes) {
+        die("Query Failed (query_delivery)");
+    }else{
+        $addStaffRow = mysqli_fetch_assoc($addStaffRes);
+    }
+}
+////////////////////////////////////////////////////////////////////////////////
 if (!empty($_POST['incomeWeeks'])) {
 
     $query5 = "SELECT SUM(total_price) total_income FROM team_13_orders WHERE o_date BETWEEN date_sub(NOW(),INTERVAL 7 MONTH) AND NOW();";
@@ -98,28 +121,43 @@ if (!empty($_POST['insert_order'])) {
         echo "<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/css/bootstrap.min.css'><link rel='stylesheet' href='./style.css'>";
         }
         ?>
-    <title>Document</title>
+    <title>Display Data</title>
 </head>
 
 <body>
-
+    
     <?php
 
+if (!empty($_POST['Discount'])){
 
+    echo "<h1 class='d-flex align-items-center justify-content-center text-center m-4 mt-5'>Discout to ".$discountRow['f_name']."'s ".$discountRow['e_type']." - ".$discountRow['DAY(o_date)']."/".$discountRow['MONTH(o_date)']."/".$discountRow['YEAR(o_date)']." <span
+    class=' ms-3 badge bg-info'>-".$_POST['Discount']."%</span></h1>";
+    echo"
+    <div class = 'container p-5 bg-light border  border-success mt-5 rounded-4 bg-body-tertiary shadow'>
+    <h1 class='fs-1 text-center text-success '>Total Price Is Now </h1>
+    <h1 class='fs-1 text-center text-success '>".$discountRow['total_price']." </h1>
+    </div>";
+
+}
+//////////////////////////////////////////////////////////////////////////////////////
+
+if (!empty($_POST['worker'])){
+    echo "<h1 class='text-center m-4 mt-5 text-secondary'>Assigning Member Staff To Event</h1>";
+    echo"
+    <div class = 'container p-5 bg-light border  border-success mt-5 rounded-4 bg-body-tertiary shadow'>
+    <h1 class='fs-1 text-center text-success '>".$addStaffRow['errorMsg']." </h1>
+    </div>";
+}
+//////////////////////////////////////////////////////////////////////////////////////
 
 if (!empty($_POST['incomeWeeks'])) {
     
-
     echo "<h1 class='text-center m-4 mt-5 text-secondary'>Total Income The Past ".$_POST['incomeWeeks']." Weeks</h1>";
     echo"
-    
     <div class = 'container p-5 bg-light border  border-success mt-5 rounded-4 bg-body-tertiary shadow'>
-    
         <h1 class='fs-1 text-center text-success '>".$income['total_income']." ₪</h1>
-
     </div>";
         
-
     }
 
     //////////////////////////////////////////////////////////////////////////////////////

@@ -22,6 +22,7 @@ VALUES (1,'Sarah', 'Cohen', 'Maple Avenue', 15, 'Tel Aviv', '+972-52-1234567'),
  (9,'Leah', 'Ben-Haim', 'Elm Street', 14, 'Tel Aviv', '+972-53-8642097'),
  (10,'Yonatan', 'Levi', 'Oak Avenue', 123, 'Jerusalem', '+972-55-9876543');
 
+
 drop table team_13_customer;
 select*from team_13_customer;
 
@@ -193,78 +194,88 @@ insert into team_13_order_worker(o_id, w_id)values
 (4,1),(5,1),(6,2),(7,1),(8,2),(9,2),(10,1);
 select * from team_13_order_worker;
 
--- -----------------------------PROCEDURES----------------------------- --
+-- -----------------------------QUERIES----------------------------- --
+-- -----------------------------Query 1----------------------------- --
+select o_date, o_id ,c_id , f_name, l_name, guest_num, meal_price, min_price, total_price from team_13_orders inner join team_13_customer c using(c_id) where o_date between date_sub(now(),INTERVAL 15 WEEK) and now();
 
-select * from team_13_orders where o_date between date_sub(now(),INTERVAL 1 WEEK) and now();
-select * from team_13_orders inner join team_13_customer using(c_id) where o_date >= now();
+-- -----------------------------Query 2----------------------------- --
+select o_date, o_id ,c_id , f_name, l_name, guest_num, meal_price, min_price, total_price from team_13_orders inner join team_13_customer using(c_id) where o_date >= now();
 
--- ------------------------DO LATER---------------------------------------- --
-select o_id,o_date, guest_num ,w_count, c_count,n_count from team_13_orders  left join (select o_id, j_id ,count(*) w_count from team_13_order_worker left join team_13_worker_job using(w_id) group by o_id,j_id having j_id = 3 ) as waiters using(o_id)
+-- -----------------------------Query 3----------------------------- --
+select o_id, DAY(o_date) o_day, MONTH(o_date) o_month,YEAR(o_date) o_year, c_id , f_name, l_name, guest_num ,FLOOR(guest_num / 10) w_req ,w_count,FLOOR(guest_num / 20) c_req, c_count,n_count  FROM team_13_orders INNER JOIN team_13_customer using(c_id) left join (select o_id, j_id ,count(*) w_count from team_13_order_worker left join team_13_worker_job using(w_id) group by o_id,j_id having j_id = 3 ) as waiters using(o_id)
 left join (select o_id, j_id, count(*) c_count from team_13_order_worker left join team_13_worker_job using(w_id) group by o_id,j_id having j_id = 2) cooks using (o_id) 
 left join (select o_id, j_id ,count(*) n_count from team_13_orders  left join team_13_order_worker using(o_id) left join team_13_worker_job using(w_id) group by o_id having n_count = 1 ) as nulls using (o_id)
 group by o_id having w_count < guest_num / 10 or c_count < guest_num / 20  or n_count =1;
 
--- ------------------------------------------------------------------------- --
+-- -----------------------------Query 4----------------------------- --
+select c_id, f_name, l_name, count(*) o_num from team_13_customer inner join team_13_orders using(c_id) group by c_id having count(*) > 1;
 
-select c_id, f_name, l_name, count(*) from team_13_customer inner join team_13_orders using(c_id) group by c_id having count(*) > 1;
-select o_id, (min_price + (meal_price * guest_num)) income  from team_13_orders where o_date between date_sub(now(),INTERVAL 7 MONTH) and now();
+-- -----------------------------Query 5----------------------------- --
+select  SUM(total_price) total_income from team_13_orders  where o_date between date_sub(now(),INTERVAL 10 MONTH) and now();
+
+
+-- -----------------------------HTML Queries----------------------------- --
+SELECT w_id , f_name, l_name, j_name FROM team_13_worker INNER JOIN team_13_worker_job USING(w_id) INNER JOIN team_13_job USING(j_id) WHERE j_id != 1 ORDER BY j_id; -- Index query
+SELECT o_id, f_name, e_type, DAY(o_date), MONTH(o_date), YEAR(o_date) FROM team_13_orders INNER JOIN team_13_order_event USING(o_id) INNER JOIN team_13_event USING(e_id) INNER JOIN team_13_customer USING(c_id) ORDER BY o_date DESC; -- Index query
 
 
 select * from team_13_orders  inner join (select o_id, j_id from team_13_order_worker inner join team_13_worker_job using(w_id) where j_id = 3 ) as a using(o_id)  ;
 select count(*) from team_13_orders  inner join (select o_id, j_id from team_13_order_worker inner join team_13_worker_job using(w_id) where j_id = 3 and o_id = 2) as a using(o_id) group by o_id;
-select * from team_13_orders inner join team_13_order_worker using(o_id) where o_id = 3;
-
+select * from team_13_orders inner join team_13_order_worker using(o_id) inner join team_13_customer using(c_id) where o_id  = 1;
+select * from team_13_worker;
 
 -- -----------------------------PROCEDURES----------------------------- --
-
-call worker_assingment(11,1);
-drop procedure worker_assingment; -- delete later
-
+-- Procedure 1 Test 
+call worker_assingment(10,1);
+drop procedure worker_assingment;
 DELIMITER $$ 
 create procedure worker_assingment(workerID int , orderID int)
 BEGIN
 	DECLARE oDate DATE;
-	DECLARE w_num INT;
+	DECLARE w_num INT(11);
     DECLARE errorMsg varchar(45);
+    DECLARE exist INT(11);
     
-	SET errorMsg = "WORKER ASSIGNED!";
-	SET oDate = (select o_date from team_13_orders where o_id = orderID );
-	IF (oDate >= Now()) 
+	SET exist = (SELECT w_id FROM team_13_orders INNER JOIN  team_13_order_worker USING(o_id) where w_id =  workerID AND o_id = orderID);
+	IF (!exist)
 	THEN
-		IF ((select j_id from team_13_worker_job where w_id = workerID) = 3) -- check if worker is a waiter
-        THEN
-		SET w_num =  (select count(*) from team_13_orders  inner join (select o_id, j_id from team_13_order_worker inner join team_13_worker_job using(w_id) where j_id = 3 and o_id = orderID) as a using(o_id) group by o_id);
-       
-			IF ( w_num < (select guest_num / 10 from team_13_orders where o_id = orderID)) -- required number of waiters
+		 select o_date into oDate from team_13_orders where o_id = orderID ;
+		IF (oDate >= Now()) 
+		THEN
+			IF ((select j_id from team_13_worker_job where w_id = workerID) = 3) -- check if worker is a waiter
 			THEN
-					insert into team_13_order_worker(o_id, w_id) values (orderID,workerID);
-                    select errorMsg;
-			ELSE
-				set errorMsg = "TOO MANY WAITERS! WORKER WAS NOT ASSIGNED";
-				select errorMsg;
-			END IF; 
-            
-		ELSE IF ((select j_id from team_13_worker_job where w_id = workerID) = 2) -- check if worker is a cook
-        THEN
-       
-			SET w_num =  (select count(*) from team_13_orders  inner join (select o_id, j_id from team_13_order_worker inner join team_13_worker_job using(w_id) where j_id = 2 and o_id = orderID) as a using(o_id) group by o_id);
-			IF ( w_num < (select guest_num / 20 from team_13_orders where o_id = orderID))
+			SET w_num =  (select count(*) from team_13_orders  inner join (select o_id, j_id from team_13_order_worker inner join team_13_worker_job using(w_id) where j_id = 3 and o_id = orderID) as a using(o_id) group by o_id);
+				IF ( w_num < (select guest_num / 10 from team_13_orders where o_id = orderID)) -- required number of waiters
+				THEN
+						INSERT INTO team_13_order_worker(o_id, w_id) values (orderID,workerID);
+                        SET errorMsg = "WAITER ASSIGNED!";
+				ELSE
+					SET errorMsg = "TOO MANY WAITERS! WORKER WAS NOT ASSIGNED";
+				END IF; 
+			ELSE IF ((select j_id from team_13_worker_job where w_id = workerID) = 2) -- check if worker is a cook
 			THEN
-					insert into team_13_order_worker(o_id, w_id) values (orderID,workerID);
-                    select errorMsg;
-			ELSE
-				set errorMsg = "TOO MANY COOKS! WORKER WAS NOT ASSIGNED";
-				select errorMsg;
+				SET w_num =  (select count(*) from team_13_orders  inner join (select o_id, j_id from team_13_order_worker inner join team_13_worker_job using(w_id) where j_id = 2 and o_id = orderID) as a using(o_id) group by o_id);
+				IF ( w_num < (select guest_num / 20 from team_13_orders where o_id = orderID))
+				THEN
+						INSERT INTO team_13_order_worker(o_id, w_id) values (orderID,workerID);
+						SET errorMsg = "WAITER ASSIGNED!";
+                ELSE
+					SET errorMsg = "TOO MANY COOKS! WORKER WAS NOT ASSIGNED";
+				END IF; 
 			END IF; 
+	
 		END IF;
-
 	END IF;	
-END IF;	
+     ELSE
+	 SET errorMsg = "THIS WORKER IS ALREADY ASSIGNED TO THIS EVENT!";
+    END IF;
+    SELECT errorMsg;
+	
 END; $$
 DELIMITER ;
 
 DELIMITER $$ 
-create procedure give_discount(dorderID int, discount int)
+CREATE PROCEDURE give_discount(dorderID int, discount int)
 BEGIN
 	UPDATE team_13_orders
 	SET
@@ -272,6 +283,24 @@ BEGIN
 	where o_id = dorderID;
 END $$
 DELIMITER ;
+
+-- Bonus Procedure
+DELIMITER $$
+CREATE PROCEDURE new_order(oDate DATE, cId INT(11),guestNum INT(10) , minPrice INT(10), mealPrice INT(10), eId INT(11))
+BEGIN
+DECLARE newId int(11);
+INSERT INTO team_13_orders (o_date, c_id ,guest_num, min_price, meal_price) VALUES (oDate, cId, guestNum, minPrice, mealPrice);
+SET newId = (SELECT o_id from team_13_orders where c_id = cId AND o_date = oDate);
+INSERT INTO team_13_order_event (o_id, e_id) VALUES (newId, eId);
+END $$
+DELIMITER ;
+
+-- test delete later --
+call new_order('2022-06-07',6, 200, 80, 27,1);
+select* from team_13_orders;
+select* from team_13_customer;
+select* from team_13_order_event;
+-- ------------------- --
 
 -- ------------------------------------------------------------------- --
 -- -----------------------------FUNCTIONS----------------------------- --

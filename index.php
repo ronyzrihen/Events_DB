@@ -1,4 +1,3 @@
-
 <?php
 
 include "db.php";
@@ -9,7 +8,7 @@ $staffRes = mysqli_query($connection, $staffQuery);
 if (!$staffRes) {
     die("Query Failed (query_delivery)");
 }
-$orderQuery = "SELECT o_id, f_name, e_type, DAY(o_date), MONTH(o_date), YEAR(o_date) FROM team_13_orders INNER JOIN team_13_order_event USING(o_id) INNER JOIN team_13_event USING(e_id) INNER JOIN team_13_customer USING(c_id) WHERE o_date >= NOW() ORDER BY o_date ;";
+$orderQuery = "SELECT o_id, f_name, e_type, DAY(o_date), MONTH(o_date), YEAR(o_date) FROM team_13_orders INNER JOIN team_13_order_event USING(o_id) INNER JOIN team_13_event USING(e_id) INNER JOIN team_13_customer USING(c_id)ORDER BY o_date DESC;";
 $orderRes = mysqli_query($connection, $orderQuery);
 if (!$orderRes) {
     die("Query Failed (query_delivery)");
@@ -31,43 +30,77 @@ if (!$orderRes) {
     <title>Document</title>
 </head>
 
-<body>
+<body class="bg-light">
 
-    <section class="d-flex ">
+    <section class="container d-flex mt-4">
 
 
         <section class="container ">
-            <h1 class='fs-1 text-center'>Queries</h1>
-            <section class="container col-6">
-                <div class="list-group ">
-
-                    <a href="new_event.php" class="list-group-item list-group-item-action">New Event</a>
-                    <button type="button" class="list-group-item list-group-item-action" data-bs-toggle="modal"
-                        data-bs-target="#recentEvents">Recent Events</button>
-                    <a href="action.php?activeEvent=1" class="list-group-item list-group-item-action">Active Events</a>
-                    <a href="action.php?requiredStaff=1" class="list-group-item list-group-item-action">Required
+            <h1 class='fs-1 text-center '>Queries</h1>
+            <section class="container mt-4">
+                <div class="list-group shadow-sm ">
+                    <button type="button" class="list-group-item list-group-item-action list-group-item-light"
+                        data-bs-toggle="modal" data-bs-target="#recentEvents">Recent Events</button>
+                    <a href="action.php?activeEvent=1"
+                        class="list-group-item-light list-group-item list-group-item-action">Active Events</a>
+                    <a href="action.php?requiredStaff=1"
+                        class="list-group-item-light list-group-item list-group-item-action">Required
                         Staff</a>
-                    <a href="action.php?returningCustomer=1" class="list-group-item list-group-item-action">Returning
+                    <a href="action.php?returningCustomer=1"
+                        class="list-group-item-light list-group-item list-group-item-action">Returning
                         Customers</a>
-                        <button type="button" class="list-group-item list-group-item-action" data-bs-toggle="modal"
-                            data-bs-target="#recentIncome">Recent Income</button>
-                            
-                            
-                        </div>
-                    </section>
-                </section>
-                <section>
-                    
-                    <h1 class='fs-1 text-center'>Procedures</h1>
-                    <div class="list-group ">
-                        
-                        <button type="button" class="list-group-item list-group-item-action" data-bs-toggle="modal"
-                            data-bs-target="#assignStaff">Recent Income</button>
+                    <button type="button" class="list-group-item-light list-group-item list-group-item-action"
+                        data-bs-toggle="modal" data-bs-target="#recentIncome">Recent Income</button>
+
+
+                </div>
+            </section>
+        </section>
+        <section class="conteiner col-6">
+
+            <h1 class='fs-1 text-center'>Procedures</h1>
+            <div class="list-group shadow-sm mt-4 ">
+
+                <a href="new_event.php" class="list-group-item list-group-item-action">New Event<span
+                        class=" ms-2 badge bg-info">Bonus</span></a>
+                <button type="button" class="list-group-item list-group-item-action" data-bs-toggle="modal"
+                    data-bs-target="#assignStaff">Assign Staff</button>
+                <button type="button" class="list-group-item list-group-item-action" data-bs-toggle="modal"
+                    data-bs-target="#discount">Give Discount</button>
             </div>
         </section>
 
     </section>
-
+    <div class="modal fade" id="discount" tabindex="-1" aria-labelledby="discountLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <form action="action.php" method="POST" class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="discountLabel">Recent Income</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group">
+                        <input type="number" name="Discount" class="form-control m-3" placeholder="Discount"
+                            aria-label="Input group example " aria-describedby="Discount " min=0 required>
+                    </div>
+                   <div>
+                   <label>Select Event</label>
+                        <select name="Pevent" class="form-select" required>
+                            <?php while ($orderRow = mysqli_fetch_assoc($orderRes)) {
+                                echo "<option value='" . $orderRow["o_id"] . "'>" . $orderRow['f_name'] . "'s " . $orderRow['e_type'] . " - " . $orderRow['DAY(o_date)'] . "/" . $orderRow['MONTH(o_date)'] . "/" . $orderRow['YEAR(o_date)'] . "</option>";
+                            }
+                            ?>
+                        </select>
+                   </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Retrive Data</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
     <div class="modal fade" id="assignStaff" tabindex="-1" aria-labelledby="assignStaffLabel" aria-hidden="true">
         <div class="modal-dialog">
             <form action="action.php" method="POST" class="modal-content">
@@ -75,20 +108,31 @@ if (!$orderRes) {
                     <h1 class="modal-title fs-5" id="assignStaffLabel">Recent Income</h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                <select name="worker" class="form-select" required>
-                    <?php while ($staffRow = mysqli_fetch_assoc($staffRes)) {
-                        echo "<option value='" . $staffRow["w_id"] . "'>" . $staffRow['f_name'] . " " . $staffRow['l_name'] ." - ". $staffRow['j_name'] ."</option>";
-                    }
-                    ?>
-                </select>
-                <select name="Pevent" class="form-select" required>
-                    <?php while ($orderRow = mysqli_fetch_assoc($orderRes)) {
-                        echo "<option value='" . $orderRow["o_id"] . "'>" . $orderRow['f_name'] . "'s " . $orderRow['e_type'] ." - ". $orderRow['DAY(o_date)'] ."/". $orderRow['MONTH(o_date)'] ."/". $orderRow['YEAR(o_date)'] ."</option>";
-                    }
-                    ?>
-                </select>
+                
+                
+                <div class="modal-body d-flex">
+                    <div class="me-3">
+
+                        <label class ="ms-2">Select Staff Member</label>
+                        <select name="worker" class="form-select" required>
+                            <?php while ($staffRow = mysqli_fetch_assoc($staffRes)) {
+                                echo "<option value='" . $staffRow["w_id"] . "'>" . $staffRow['f_name'] . " " . $staffRow['l_name'] . " - " . $staffRow['j_name'] . "</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
+                    <div>
+
+                        <label>Select Event</label>
+                        <select name="Pevent" class="form-select" required>
+                            <?php while ($orderRow = mysqli_fetch_assoc($orderRes)) {
+                                echo "<option value='" . $orderRow["o_id"] . "'>" . $orderRow['f_name'] . "'s " . $orderRow['e_type'] . " - " . $orderRow['DAY(o_date)'] . "/" . $orderRow['MONTH(o_date)'] . "/" . $orderRow['YEAR(o_date)'] . "</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
                 </div>
+
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button type="submit" class="btn btn-primary">Retrive Data</button>
